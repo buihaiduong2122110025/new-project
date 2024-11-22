@@ -236,3 +236,290 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+
+
+// import React, { useState, useEffect } from 'react';
+// import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+// import * as Google from 'expo-auth-session/providers/google';
+// import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+// import * as WebBrowser from 'expo-web-browser';
+
+// // Đăng ký WebBrowser cho Expo Auth Session
+// WebBrowser.maybeCompleteAuthSession();
+
+// const LoginScreen = ({ navigation }) => {
+//   const [error, setError] = useState('');
+
+//   // Sử dụng `useAuthRequest` để yêu cầu quyền đăng nhập từ Google
+//   const [request, response, promptAsync] = Google.useAuthRequest({
+//     clientId: '246547013798-vi3242kb8a32knqh2kk6sqs9mo1rjval.apps.googleusercontent.com',
+//   });
+
+//   // Sử dụng `useEffect` để xử lý phản hồi khi người dùng đăng nhập thành công
+//   useEffect(() => {
+//     if (response?.type === 'success') {
+//       const { id_token } = response.params;
+//       const auth = getAuth();
+//       const credential = GoogleAuthProvider.credential(id_token);
+
+//       // Sử dụng `signInWithCredential` từ Firebase Authentication
+//       signInWithCredential(auth, credential)
+//         .then(() => navigation.navigate('Home'))
+//         .catch(err => {
+//           console.error("Error signing in with Google credential:", err);
+//           setError("Failed to sign in with Google.");
+//         });
+//     }
+//   }, [response]);
+
+//   return (
+//     <SafeAreaView style={{ flex: 1, backgroundColor: '#e8ecf4' }}>
+//       <View style={styles.container}>
+//         <Text style={styles.title}>Sign in with Google</Text>
+
+//         <TouchableOpacity disabled={!request} onPress={() => promptAsync()}>
+//           <View style={styles.btn}>
+//             <Text style={styles.btnText}>Sign in with Google</Text>
+//           </View>
+//         </TouchableOpacity>
+
+//         {error ? <Text style={styles.errorText}>{error}</Text> : null}
+//       </View>
+//     </SafeAreaView>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     padding: 16,
+//   },
+//   title: {
+//     fontSize: 24,
+//     fontWeight: 'bold',
+//     textAlign: 'center',
+//     marginBottom: 24,
+//   },
+//   btn: {
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     backgroundColor: '#4285F4',
+//     paddingVertical: 12,
+//     borderRadius: 8,
+//   },
+//   btnText: {
+//     color: '#fff',
+//     fontWeight: '600',
+//     fontSize: 16,
+//   },
+//   errorText: {
+//     color: 'red',
+//     textAlign: 'center',
+//     marginTop: 10,
+//   },
+// });
+
+// export default LoginScreen;
+
+
+
+
+
+
+
+
+
+
+
+
+// import React, { useState } from 'react';
+// import { SafeAreaView, View, Image, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+// import * as Facebook from 'expo-auth-session/providers/facebook';
+// import { initializeApp, getApps, getApp } from 'firebase/app';
+// import { getAuth, FacebookAuthProvider, signInWithCredential } from 'firebase/auth';
+
+// // Firebase configuration
+// const firebaseConfig = {
+//   apiKey: "AIzaSyAVSARp95HZ-TN3Qi4sKL_IKcmvZB1LzRM",
+//   authDomain: "fir-auth-94ce7.firebaseapp.com",
+//   projectId: "fir-auth-94ce7",
+//   storageBucket: "fir-auth-94ce7.appspot.com",
+//   messagingSenderId: "246547013798",
+//   appId: "1:246547013798:web:cd7bbafa9e87335b375467"
+// };
+
+// // Initialize Firebase
+// let app;
+// if (!getApps().length) {
+//   app = initializeApp(firebaseConfig);
+// } else {
+//   app = getApp();
+// }
+// const auth = getAuth(app);
+
+// const LoginScreen = ({ navigation }) => {
+//   const [form, setForm] = useState({ email: '', password: '' });
+//   const [error, setError] = useState('');
+
+//   const [request, response, promptAsync] = Facebook.useAuthRequest({
+//     clientId: 'YOUR_FACEBOOK_APP_ID',
+//   });
+
+//   // Handle Facebook Login
+//   const handleFacebookSignIn = async () => {
+//     const result = await promptAsync();
+//     if (result.type === 'success') {
+//       const { access_token } = result.params;
+//       const facebookCredential = FacebookAuthProvider.credential(access_token);
+//       await signInWithCredential(auth, facebookCredential);
+//       navigation.navigate('Home');
+//     } else {
+//       setError('Facebook login failed. Please try again.');
+//     }
+//   };
+
+//   const handleSignIn = async () => {
+//     const { email, password } = form;
+//     try {
+//       // Firebase email sign-in here
+//       navigation.navigate('Home');
+//     } catch (err) {
+//       setError('Failed to sign in. Please check your credentials.');
+//     }
+//   };
+
+//   return (
+//     <SafeAreaView style={{ flex: 1, backgroundColor: '#e8ecf4' }}>
+//       <View style={styles.container}>
+//         {/* Existing Login UI */}
+//         <TouchableOpacity onPress={handleFacebookSignIn}>
+//           <View style={styles.fbBtn}>
+//             <Text style={styles.fbBtnText}>Continue with Facebook</Text>
+//           </View>
+//         </TouchableOpacity>
+//       </View>
+//     </SafeAreaView>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   fbBtn: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     borderRadius: 30,
+//     paddingVertical: 10,
+//     backgroundColor: '#4267B2',
+//     marginBottom: 10,
+//   },
+//   fbBtnText: {
+//     fontSize: 18,
+//     fontWeight: '600',
+//     color: '#fff',
+//   },
+// });
+
+// export default LoginScreen;
+
+
+
+
+
+// import React, { useState, useRef } from 'react';
+// import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+// import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+// import { getAuth, PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+// import app from '@/firebaseConfig';
+
+// const LoginScreen = ({ navigation }) => {
+//   const [phoneNumber, setPhoneNumber] = useState('');
+//   const [verificationId, setVerificationId] = useState('');
+//   const [verificationCode, setVerificationCode] = useState('');
+//   const [message, setMessage] = useState('');
+
+//   const recaptchaVerifier = useRef(null);
+//   const auth = getAuth(app);
+
+//   const handleSendVerificationCode = async () => {
+//     try {
+//       const phoneProvider = new PhoneAuthProvider(auth);
+//       const verificationId = await phoneProvider.verifyPhoneNumber(
+//         phoneNumber,
+//         recaptchaVerifier.current
+//       );
+//       setVerificationId(verificationId);
+//       setMessage('Verification code has been sent to your phone');
+//     } catch (error) {
+//       setMessage(`Error: ${error.message}`);
+//     }
+//   };
+
+//   const handleVerifyVerificationCode = async () => {
+//     try {
+//       const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
+//       await signInWithCredential(auth, credential);
+//       setMessage('Phone authentication successful');
+//       navigation.navigate('Welcome');
+//     } catch (error) {
+//       setMessage(`Error: ${error.message}`);
+//     }
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <FirebaseRecaptchaVerifierModal
+//         ref={recaptchaVerifier}
+//         firebaseConfig={app.options}
+//       />
+      
+//       <Text style={styles.message}>{message}</Text>
+
+//       {!verificationId ? (
+//         <View>
+//           <Text>Enter phone number</Text>
+//           <TextInput
+//             style={styles.input}
+//             placeholder="+1 234 567 890"
+//             keyboardType="phone-pad"
+//             onChangeText={setPhoneNumber}
+//           />
+//           <Button title="Send Verification Code" onPress={handleSendVerificationCode} />
+//         </View>
+//       ) : (
+//         <View>
+//           <Text>Enter verification code</Text>
+//           <TextInput
+//             style={styles.input}
+//             placeholder="123456"
+//             keyboardType="number-pad"
+//             onChangeText={setVerificationCode}
+//           />
+//           <Button title="Confirm Verification Code" onPress={handleVerifyVerificationCode} />
+//         </View>
+//       )}
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//     justifyContent: 'center',
+//   },
+//   input: {
+//     height: 50,
+//     borderColor: '#ccc',
+//     borderWidth: 1,
+//     padding: 10,
+//     marginVertical: 10,
+//   },
+//   message: {
+//     textAlign: 'center',
+//     marginBottom: 20,
+//     color: 'red',
+//   },
+// });
+
+// export default LoginScreen;

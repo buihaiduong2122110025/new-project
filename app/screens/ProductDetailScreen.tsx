@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -13,82 +13,140 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Modal,
-  Pressable
+  Pressable,
+  Alert
 } from 'react-native';
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, updateDoc, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { app } from '@/firebaseConfig';
-import { Alert } from 'react-native';
 
 const db = getFirestore(app);
 
 const { width } = Dimensions.get('window');
 
-const ProductDetailScreen = ({ route, navigation }: { route: any, navigation: any }) => {
-  const { productName, productImage, productPrice } = route.params;
+const ProductDetailScreen = ({ route, navigation }) => {
+  const { productName, productImage, productPrice, productStock, productDescription, productCategoryId } = route.params;
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const images = [productImage, productImage, productImage];
   const [modalVisible, setModalVisible] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const rotateValue = useRef(new Animated.Value(0)).current;
+  const [quantity, setQuantity] = useState(1);
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [categoryName, setCategoryName] = useState(''); // Thêm state cho tên category
 
-
-  React.useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (modalVisible && countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
+  // Lấy tên của category từ Firestore
+  useEffect(() => {
+    const fetchCategoryName = async () => {
+      try {
+        const categoryDoc = doc(db, "category", productCategoryId); // Thay "category" bằng tên collection của bạn
+        const categorySnapshot = await getDoc(categoryDoc);
+        
+        if (categorySnapshot.exists()) {
+          setCategoryName(categorySnapshot.data().name); // Lấy tên category từ dữ liệu và lưu vào state
+        } else {
+          console.log("No such category!");
+        }
+      } catch (error) {
+        console.error("Error fetching category name:", error);
       }
     };
-  }, [modalVisible, countdown]);
 
+    fetchCategoryName();
+  }, [productCategoryId]);
 
-  // Type the event parameter here
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  // Lấy các sản phẩm có cùng categoryId từ Firestore
+  useEffect(() => {
+    const fetchSimilarProducts = async () => {
+      try {
+        const productsRef = collection(db, "product");
+        const q = query(productsRef, where("categoryId", "==", productCategoryId));
+        const querySnapshot = await getDocs(q);
+
+        const products = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        setSimilarProducts(products);
+      } catch (error) {
+        console.error("Error fetching similar products:", error);
+      }
+    };
+
+    fetchSimilarProducts();
+  }, [productCategoryId]);
+
+  const handleScroll = (event) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
     setActiveIndex(index);
   };
 
-  const renderImage = ({ item }: { item: string }) => (
+  const renderImage = ({ item }) => (
     <Image source={{ uri: item }} style={styles.productImage} />
   );
-
-  const [quantity, setQuantity] = useState(1);
 
   const increaseQuantity = () => setQuantity(prev => prev + 1);
   const decreaseQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
   const addToBag = async () => {
     try {
-      const docRef = await addDoc(collection(db, 'cart'), {
-        name: productName,
-        image: productImage,
-        price: productPrice,
-        quantity: quantity
-      });
-      console.log("Product added to cart with ID: ", docRef.id);
+      const productsRef = collection(db, "product");
+      const q = query(productsRef, where("name", "==", productName));
+  
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        const productDoc = querySnapshot.docs[0];
+        const productData = productDoc.data();
+        const stock = parseInt(productData.stock, 10);
+  
+        if (stock >= quantity) {
+          // Hiển thị thông tin sản phẩm trong console
+          console.log("Adding to cart:", {
+            name: productName,
+            image: productImage,
+            price: productPrice,
+            description: productDescription,
+            // categoryId: productCategoryId,
+            quantity: quantity,
+            stock: stock
+          });
+  
+          // Giảm stock và thêm vào giỏ hàng
+          await updateDoc(productDoc.ref, { stock: stock - quantity });
+          const docRef = await addDoc(collection(db, 'cart'), {
+            name: productName,
+            image: productImage,
+            price: productPrice,
+            // categoryId: productCategoryId,
 
-      // Show the success modal
-      setModalVisible(true);
-      setCountdown(10); // Reset countdown to 10 seconds
-
-      // Automatically close the modal after 10 seconds (10000 ms)
-      setTimeout(() => {
-        setModalVisible(false);
-        setCountdown(10); // Reset countdown after modal is closed
-      }, 10000);
+            quantity: quantity,
+            stock: stock
+          });
+  
+          console.log("Product added to cart with ID:", docRef.id);
+  
+          // Hiển thị modal thành công
+          setModalVisible(true);
+          setCountdown(10);
+          setTimeout(() => {
+            setModalVisible(false);
+            setCountdown(10);
+          }, 10000);
+        } else {
+          Alert.alert("Not enough stock", "The quantity exceeds available stock.");
+        }
+      } else {
+        console.log("No such product!");
+        Alert.alert("Error", "Product not found.");
+      }
     } catch (error) {
-      console.error("Error adding product to cart: ", error);
-      setModalVisible(false);  // Hide modal on error
+      console.error("Error adding product to cart:", error);
+      setModalVisible(false);
     }
   };
-
+  
   return (
 
     <ScrollView style={styles.container}>
@@ -130,7 +188,12 @@ const ProductDetailScreen = ({ route, navigation }: { route: any, navigation: an
           {/* Quantity Selector */} 
           {/* // In your renderFF */}
           <View style={styles.quantityContainer}>
-            <Text style={{ marginRight: 10 }}>Qty: {quantity}</Text>
+          <Text style={{ marginRight: 5 }}>Category: {categoryName}</Text>
+
+          {/* <Text style={{ marginRight: 5 }}>Stock: {productStock}</Text> */}
+
+            {/* <Text style={{ marginRight: 5 }}>Qty: {quantity}</Text> */}
+
             <TouchableOpacity style={styles.quantityButton} onPress={decreaseQuantity}>
               <Ionicons name="remove" size={16} color="#E29547" />
             </TouchableOpacity>
@@ -163,15 +226,15 @@ const ProductDetailScreen = ({ route, navigation }: { route: any, navigation: an
 
         {/* Tabs */}
         <View style={styles.tabsContainer}>
-          <TouchableOpacity style={{ backgroundColor: '#FFEEDD', padding: 10, margin: 2, borderRadius: 10, width: 130 }}>
-            <Text style={styles.tabActive}>Description</Text>
+          <TouchableOpacity style={{ backgroundColor: '#FFEEDD', padding: 10, margin: 2, borderRadius: 10, width: "100%" }}>
+            <Text style={styles.tabActive}>Description : {productDescription}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{ padding: 10, margin: 2, borderRadius: 5 }}>
+          {/* <TouchableOpacity style={{ padding: 10, margin: 2, borderRadius: 5 }}>
             <Text style={styles.tabActive1}>Materials</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{ padding: 10, margin: 2, borderRadius: 5 }}>
             <Text style={styles.tabActive1}>Reviews</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Description Text */}
@@ -179,20 +242,17 @@ const ProductDetailScreen = ({ route, navigation }: { route: any, navigation: an
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc consectetur velit at massa vehicula, quis fringilla urna gravida.
         </Text>
 
-        {/* Similar Products */}
-        <Text style={styles.similarTitle}>Similar products</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.similarProductsContainer}>
-          <View style={styles.similarProductCard}>
-            <Image source={require('../../assets/images/chair1.webp')} style={styles.similarProductImage} />
-            <Text style={styles.similarProductName}>Sverom chair</Text>
-            <Text style={styles.similarProductPrice}>$400</Text>
+           {/* Similar Products */}
+      <Text style={styles.similarTitle}>Similar products</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.similarProductsContainer}>
+        {similarProducts.map((product) => (
+          <View key={product.id} style={styles.similarProductCard}>
+            <Image source={{ uri: product.image }} style={styles.similarProductImage} />
+            <Text style={styles.similarProductName}>{product.name}</Text>
+            <Text style={styles.similarProductPrice}>${product.price}</Text>
           </View>
-          <View style={styles.similarProductCard}>
-            <Image source={require('../../assets/images/table1.webp')} style={styles.similarProductImage} />
-            <Text style={styles.similarProductName}>Grundtal sofa</Text>
-            <Text style={styles.similarProductPrice}>$499</Text>
-          </View>
-        </ScrollView>
+        ))}
+      </ScrollView>
 
         {/* Add to Bag Button */}
         <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>

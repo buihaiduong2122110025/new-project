@@ -49,7 +49,7 @@ const ProfileScreen = ({ route, navigation }: { route: any, navigation: any }) =
           style={styles.profileImage}
         />
         <View>
-          <Text style={styles.name}> Hải Dương</Text>
+          <Text style={styles.name}> </Text>
           <Text style={styles.email}>{userEmail ? userEmail : 'No email found'}</Text>
         </View>
         </TouchableOpacity>

@@ -5,7 +5,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from '@/firebaseConfig';
 
 
-import PayPal from 'react-native-paypal';
+// import PayPal from 'react-native-paypal';
 import { Ionicons } from '@expo/vector-icons';
 
 const db = getFirestore(app);

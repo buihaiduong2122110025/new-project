@@ -22,6 +22,9 @@ interface Product {
   name: string;
   image: string;
   price: number;
+  stock: string;
+  description: string;
+
   categoryId: string; // ID của danh mục
 
 }
@@ -75,14 +78,18 @@ const FeedScreen = ({ route, navigation }: { route: any, navigation: any }) => {
           products.push({
             id: doc.id,
             name: data.name,
+            description: data.description,
+
             image: data.image,
             price: data.price,
+            stock :data.stock ,
             categoryId: data.categoryId
           });
         }
       });
       setAllProducts(products);
       setProductList(products);
+      console.log(products)
     } catch (error) {
       console.error("Error fetching products: ", error);
     }
@@ -252,11 +259,20 @@ const FeedScreen = ({ route, navigation }: { route: any, navigation: any }) => {
                     productName: product.name,
                     productImage: product.image,
                     productPrice: product.price,
+                    productStock: product.stock,
+                    productDescription: product.description,
+                    productCategoryId: product.categoryId,
+
+
                   })}
                 >
                   <Image source={{ uri: product.image }} style={styles.popularImage} />
                   <Text style={styles.popularText}>{product.name}</Text>
                   <Text style={styles.popularPrice}>${product.price}</Text>
+                  {/* <Text style={styles.popularPrice}>{product.categoryId}</Text> */}
+                  {/* <Text style={styles.popularPrice}>{product.description}</Text> */}
+
+
                 </TouchableOpacity>
               </View>
             ))
